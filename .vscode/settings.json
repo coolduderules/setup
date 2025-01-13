@@ -1,0 +1,5 @@
+{
+    "gitdoc.enabled": true,
+    "explorer.fileNesting.enabled": true,
+    "scm.alwaysShowRepositories": true
+}
