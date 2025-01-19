@@ -88,7 +88,7 @@ fi
 
 mkfs.fat -F 32 -n "$esp" "/dev/disk/by-label/$esp"
 
-mount -o compress=zstd,subvol=/ "/dev/disk/by-label/$lin" /mnt/arch-btrfs
+mount -o compress=zstd,subvol=/ "/dev/disk/by-label/$lin" /mnt/arch-btrfs --mkdir
 if ls /mnt/arch-btrfs; then btrfs sub delete -R /mnt/arch-btrfs/* || :
 fi
 cd /mnt/arch-btrfs
