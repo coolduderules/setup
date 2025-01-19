@@ -47,13 +47,13 @@ if [ -z "$suff" ]; then
     exit 1
 fi
 if [ -v "$ARCH_CFG"]; then
-    echo "Config read from '$ARCH_CFG' environment variable"
+    echo "Config read from \$ARCH_CFG environment variable"
 else
     read -p "PATH TO CONFIG FILE: " ARCH_CFG
     export ARCH_CFG
 fi
 if [ -v "$ARCH_CREDS"]; then
-    echo "Config read from '$ARCH_CREDS' environment variable"
+    echo "Config read from \$ARCH_CREDS environment variable"
 else
     read -p "PATH TO CONFIG FILE: " ARCH_CREDS
     export ARCH_CREDS
