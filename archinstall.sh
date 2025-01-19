@@ -10,7 +10,7 @@ fi
 # Check root privileges
 if [ $EUID != 0 ]; then
     if [ "$PWD" != "/Users/jason/Github/setup" ]; then
-        sudo -E "$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )" "$@"
+        sudo -E "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")" "$@"
         exit $?
     fi
 fi
