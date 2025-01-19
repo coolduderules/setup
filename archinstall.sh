@@ -65,11 +65,11 @@ esp="ESP$suff"
 umount -R "/dev/disk/by-label/$esp" "/dev/disk/by-label/$lin" >> /dev/null 2>&1 || :
 umount -R "LABEL=$esp" > /dev/null 2>&1 || :
 umount -R "LABEL=$lin" > /dev/null 2>&1 || :
-umount -R /mnt/arch_btrfs/* >> /dev/null 2>&1 || :
+umount -R /mnt/* >> /dev/null 2>&1 || :
 umount -R "/dev/disk/by-label/$esp" "/dev/disk/by-label/$lin" > /dev/null 2>&1 || :
-umount -R /mnt/arch_btrfs > /dev/null 2>&1 || :
-umount -Rf /mnt/arch_btrfs > /dev/null 2>&1 || :
-rm -rf /mnt/arch_btrfs/* > /dev/null 2>&1 || :
+umount -R /mnt > /dev/null 2>&1 || :
+umount -Rf /mnt > /dev/null 2>&1 || :
+rm -rf /mnt/* > /dev/null 2>&1 || :
 echo "$lin:$esp"
 umount "/dev/disk/by-label/$lin" || :
 btr=`blkid -o value -s TYPE "/dev/disk/by-label/$lin" | grep btrfs || :`
@@ -77,7 +77,7 @@ echo "$btr"
 if [ -n "$btr" ]; then
     echo 'already formatted as btrfs'
 else
-    echo -e 'anything mounted on /mnt/arch_btrfs will show here \n\n'
+    echo -e 'anything mounted on /mnt will show here \n\n'
     mount | grep mnt || :
 
     echo -e "\n press any key to format LABEL=$lin as btrfs"
@@ -88,40 +88,40 @@ fi
 
 mkfs.fat -F 32 -n "$esp" "/dev/disk/by-label/$esp"
 
-mount -o compress=zstd,subvol=/ "/dev/disk/by-label/$lin" /mnt/arch_btrfs --mkdir
-if ls /mnt/arch_btrfs; then btrfs sub delete -R /mnt/arch_btrfs/* || :
+mount -o compress=zstd,subvol=/ "/dev/disk/by-label/$lin" /mnt --mkdir
+if ls /mnt; then btrfs sub delete -R /mnt/* || :
 fi
-cd /mnt/arch_btrfs
-btrfs sub list /mnt/arch_btrfs | awk '{print $9}' | xargs -I{} btrfs sub delete /mnt/arch_btrfs/{} || :
-rm -rf /mnt/arch_btrfs/*
-rm -rf /mnt/arch_btrfs/.*
-btrfs sub create /mnt/arch_btrfs/@ /mnt/arch_btrfs/@home /mnt/arch_btrfs/@.snapshots /mnt/arch_btrfs/@setup
-umount -R /mnt/arch_btrfs || :
+cd /mnt
+btrfs sub list /mnt | awk '{print $9}' | xargs -I{} btrfs sub delete /mnt/{} || :
+rm -rf /mnt/*
+rm -rf /mnt/.*
+btrfs sub create /mnt/@ /mnt/@home /mnt/@.snapshots /mnt/@setup
+umount -R /mnt || :
 umount "/dev/disk/by-label/$lin" || :
 umount "LABEL=$esp" || :
 umount "LABEL=$lin" || :
 umount "/dev/disk/by-label/$esp" "/dev/disk/by-label/$lin" || :
-umount -R /mnt/arch_btrfs || :
+umount -R /mnt || :
 
-mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@ "/dev/disk/by-label/$lin" /mnt/arch_btrfs
-mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@home "/dev/disk/by-label/$lin" --mkdir /mnt/arch_btrfs/home
-mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@.snapshots "/dev/disk/by-label/$lin" --mkdir /mnt/arch_btrfs/.snapshots
-mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@setup "/dev/disk/by-label/$lin" --mkdir /mnt/arch_btrfs/home/setup
-# mount -o compress=zstd,subvol=@log "/dev/disk/by-label/$lin" --mkdir /mnt/arch_btrfs/var/log
-# mount -o compress=zstd,subvol=@pkg "/dev/disk/by-label/$lin" --mkdir /mnt/arch_btrfs/var/cache/pacman/pkg
-# mount -o compress=zstd,subvol=@srv "/dev/disk/by-label/$lin" --mkdir /mnt/arch_btrfs/srv
-# mount -o compress=zstd,subvol=@tmp "/dev/disk/by-label/$lin" --mkdir /mnt/arch_btrfs/tmp
-mount "/dev/disk/by-label/$esp" --mkdir /mnt/arch_btrfs/boot
+mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@ "/dev/disk/by-label/$lin" /mnt
+mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@home "/dev/disk/by-label/$lin" --mkdir /mnt/home
+mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@.snapshots "/dev/disk/by-label/$lin" --mkdir /mnt/.snapshots
+mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@setup "/dev/disk/by-label/$lin" --mkdir /mnt/home/setup
+# mount -o compress=zstd,subvol=@log "/dev/disk/by-label/$lin" --mkdir /mnt/var/log
+# mount -o compress=zstd,subvol=@pkg "/dev/disk/by-label/$lin" --mkdir /mnt/var/cache/pacman/pkg
+# mount -o compress=zstd,subvol=@srv "/dev/disk/by-label/$lin" --mkdir /mnt/srv
+# mount -o compress=zstd,subvol=@tmp "/dev/disk/by-label/$lin" --mkdir /mnt/tmp
+mount "/dev/disk/by-label/$esp" --mkdir /mnt/boot
 
-cat << EOF > /mnt/arch_btrfs/boot/jpost.sh
+cat << EOF > /mnt/boot/jpost.sh
 #!/bin/bash
 git clone --depth 1 https://github.com/prasanthrangan/hyprdots /home/jason/HyDE
 cd /home/jason/HyDE
 ./install.sh
 EOF
-rsync -axHAWXSR --info=progress2 /usr/lib/python3.13/site-packages/archinstall /mnt/arch_btrfs/
+rsync -axHAWXSR --info=progress2 /usr/lib/python3.13/site-packages/archinstall /mnt/
 archinstall --config $ARCH_CFG --creds $ARCH_CREDS
 
-arch-chroot /mnt/arch_btrfs chmod 777 /boot/jpost.sh
-arch-chroot /mnt/arch_btrfs chmod +x /boot/jpost.sh
-arch-chroot /mnt/arch_btrfs -u jason /boot/jpost.sh
+arch-chroot /mnt chmod 777 /boot/jpost.sh
+arch-chroot /mnt chmod +x /boot/jpost.sh
+arch-chroot /mnt -u jason /boot/jpost.sh
