@@ -113,4 +113,7 @@ mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@setup "/de
 # mount -o compress=zstd,subvol=@tmp "/dev/disk/by-label/$lin" --mkdir /mnt/tmp
 mount "/dev/disk/by-label/$esp" --mkdir /mnt/boot
 
+cat << EOF >
+
 archinstall --config $ARCH_CFG --creds $ARCH_CREDS --silent
+
