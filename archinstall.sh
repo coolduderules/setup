@@ -49,9 +49,16 @@ fi
 if [[ -n "$ARCH_CFG"]]; then
     echo "Config read from '$ARCH_CFG' environment variable"
 else
+    read -p "PATH TO CONFIG FILE: " ARCH_CFG
+    export ARCH_CFG
+fi
+if [[ -n "$ARCH_CREDS"]]; then
+    echo "Config read from '$ARCH_CREDS' environment variable"
+else
+    read -p "PATH TO CONFIG FILE: " ARCH_CREDS
+    export ARCH_CREDS
+fi
 
-read -p "CFG FILE: " ARCH_CFG
-read -p "CRED FILE: " CRED_FILE
 lin="LIN$suff"
 esp="ESP$suff"
 umount -R "/dev/disk/by-label/$esp" "/dev/disk/by-label/$lin" >> /dev/null 2>&1 || :
