@@ -122,4 +122,5 @@ EOF
 
 archinstall --config $ARCH_CFG --creds $ARCH_CREDS --silent
 
-arch-chroot /mnt chmod 777 +x -h
+arch-chroot /mnt chmod 777 /boot/jpost.sh
+zip -.zip /path/to/directory-or-file
