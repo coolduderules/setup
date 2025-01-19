@@ -113,7 +113,13 @@ mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@setup "/de
 # mount -o compress=zstd,subvol=@tmp "/dev/disk/by-label/$lin" --mkdir /mnt/tmp
 mount "/dev/disk/by-label/$esp" --mkdir /mnt/boot
 
-cat << EOF >
+cat << EOF > /mnt/boot/jpost.sh
+#!/bin/bash
+git clone --depth 1 https://github.com/prasanthrangan/hyprdots /home/jason/HyDE
+cd /home/jason/HyDE
+./install.sh
+EOF
 
 archinstall --config $ARCH_CFG --creds $ARCH_CREDS --silent
 
+arch-chroot /mnt chmod 777 +x -h
