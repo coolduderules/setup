@@ -112,4 +112,4 @@ mount -o noatime,compress=zstd:3,space_cache=v2,discard=async,subvol=@setup "/de
 # mount -o compress=zstd,subvol=@tmp "/dev/disk/by-label/$lin" --mkdir /mnt/tmp
 mount "/dev/disk/by-label/$esp" --mkdir /mnt/boot
 
-archinstall --config ${read -p "CFG FILE: "} --creds ${read -p "CRED FILE: "} --quiet
+archinstall --config $ARCH_CFG --creds $ARCH_CREDS --quiet
