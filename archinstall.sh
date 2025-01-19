@@ -46,7 +46,10 @@ if [ -z "$suff" ]; then
     echo "Error: Disk label suffix cannot be empty"
     exit 1
 fi
+if [[ -n "$ARCH_CFG"]]; then
 
+read -p "CFG FILE: " ARCH_CFG
+read -p "CRED FILE: " CRED_FILE
 lin="LIN$suff"
 esp="ESP$suff"
 umount -R "/dev/disk/by-label/$esp" "/dev/disk/by-label/$lin" >> /dev/null 2>&1 || :
