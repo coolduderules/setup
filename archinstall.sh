@@ -120,7 +120,7 @@ cd /home/jason/HyDE
 ./install.sh
 EOF
 
-archinstall --config $ARCH_CFG --creds $ARCH_CREDS --silent
+archinstall --config $ARCH_CFG --creds $ARCH_CREDS
 
 arch-chroot /mnt chmod 777 /boot/jpost.sh
 arch-chroot /mnt chmod +x /boot/jpost.sh
