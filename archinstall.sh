@@ -62,8 +62,8 @@ fi
 lin="LIN$suff"
 esp="ESP$suff"
 umount -R "/dev/disk/by-label/$esp" "/dev/disk/by-label/$lin" >> /dev/null 2>&1 || :
-umount -R "LABEL=$esp" >> /dev/null 2>&1 || :
-umount -R "LABEL=$lin" >> /dev/null 2>&1 || :
+umount -R "LABEL=$esp" > /dev/null 2>&1 || :
+umount -R "LABEL=$lin" > /dev/null 2>&1 || :
 umount -R /mnt/* >> /dev/null 2>&1 || :
 umount -R "/dev/disk/by-label/$esp" "/dev/disk/by-label/$lin" > /dev/null 2>&1 || :
 umount -R /mnt > /dev/null 2>&1 || :
