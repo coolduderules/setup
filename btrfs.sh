@@ -74,6 +74,10 @@ else
     mkfs.btrfs -L "$lin" -n 32k -f "/dev/disk/by-label/$lin"
 fi
 
+umount -R /mnt || :
+umount "/dev/disk/by-label/$lin" || :
+umount "LABEL=$esp" || :
+
 mkfs.fat -F 32 -n "$esp" "/dev/disk/by-label/$esp"
 
 mount -o compress=zstd,subvol=/ "/dev/disk/by-label/$lin" /mnt
