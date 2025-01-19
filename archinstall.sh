@@ -47,6 +47,8 @@ if [ -z "$suff" ]; then
     exit 1
 fi
 if [[ -n "$ARCH_CFG"]]; then
+    echo "Config read from '$ARCH_CFG' environment variable"
+else
 
 read -p "CFG FILE: " ARCH_CFG
 read -p "CRED FILE: " CRED_FILE
