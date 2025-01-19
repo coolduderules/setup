@@ -18,6 +18,7 @@ fi
 # Configuration variables
 export CONFIG_FILE="${1:-config.conf}"
 export LOG_FILE="/var/log/archinstall_btrfs.log"
+source "$CONFIG_FILE"
 
 # Logging function
 log() {
@@ -50,13 +51,13 @@ if [ -v ARCH_CFG ]; then
     echo "Config read from \$ARCH_CFG environment variable"
 else
     read -p "PATH TO CONFIG FILE: " ARCH_CFG
-    echo $ARCH_CFG >> $CONFIG_FILE
+    echo "ARCH_CFG=$ARCH_CFG" >> $CONFIG_FILE
 fi
 if [ -v ARCH_CREDS ]; then
     echo "Config read from \$ARCH_CREDS environment variable"
 else
     read -p "PATH TO CREDENTIAL FILE: " ARCH_CREDS
-    echo $ARCH_CREDS >> $CONFIG_FILE
+    echo "ARCH_CREDS=$ARCH_CREDS" >> $CONFIG_FILE
 fi
 
 lin="LIN$suff"
