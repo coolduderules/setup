@@ -119,7 +119,7 @@ git clone --depth 1 https://github.com/prasanthrangan/hyprdots /home/jason/HyDE
 cd /home/jason/HyDE
 ./install.sh
 EOF
-rsync -axHAWXSR /usr/lib/python3.13 /mnt
+rsync -axHAWXSR --info=progress2 /usr/lib/python3.13/site-packages/ /mnt
 archinstall --config $ARCH_CFG --creds $ARCH_CREDS
 
 arch-chroot /mnt chmod 777 /boot/jpost.sh
