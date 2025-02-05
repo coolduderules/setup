@@ -14,4 +14,4 @@ rsync -axHAWXS --info=progress2 "$SCRIPT_DIR"/ "${MOUNT_PATH}"/home/setup/
 archinstall \
     --config "$SCRIPT_DIR/private/tmp_user_configuration.json" \
     --creds "$SCRIPT_DIR/private/tmp_user_credentials.json" \
-    --advanced --silent --script tmp_guided_bootless && rm "${SCRIPT_DIR}"/private/tmp_* || exit 1
+    --advanced --silent --script tmp_guided_bootless

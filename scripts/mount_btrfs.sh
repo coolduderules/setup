@@ -3,18 +3,22 @@ set -eo pipefail
 
 error() { printf "Error: %s\n" "$*" >&2; exit 1; }
 status() { printf ">>> %s\n" "$*" >&2; }
-cleanup() { [[ -d $MOUNT_PATH ]] && mountpoint -q "$MOUNT_PATH" && umount -R "$MOUNT_PATH" 2>/dev/null; }
+cleanup() { [[ -d $MOUNT_PATH ]] && [[ "$?" != 0 ]] && mountpoint -q "$MOUNT_PATH" && umount -R "$MOUNT_PATH" 2>/dev/null; }
 mount_subvol() {
-    local subvol="$1" mp="${2##/}"
-    status "Mounting ${subvol} at ${MOUNT_PATH}/${mp}"
-    mount -o "${MOUNT_OPTS},subvol=${subvol}" --mkdir "$device" "${MOUNT_PATH}/${mp}" ||
-        error "Failed to mount $subvol"
+    local subvol="$1" mp="$2"
+    mp=${mp##/}
+    status "Mounting ${subvol} at $MOUNT_PATH/$mp"
+    mount -o "$MOUNT_OPTS$subvol" --mkdir "$device" "$MOUNT_PATH/$mp" || error "Failed to mount $subvol"
+    ls "${MOUNT_PATH}"
 }
 
-  [[ $(id -u) == 0 ]] || exec sudo -E -- "$0" "$@"
+if [[ "$EUID" != 0 ]]; then
+    exec sudo -E -- "$0" "$@"
+    exit 0
+fi
 command -v dialog >/dev/null || pacman -Sy --noconfirm dialog
 command -v btrfs >/dev/null || pacman -Sy --noconfirm btrfs-progs
-MOUNT_OPTS="defaults,ssd,noatime,autodefrag,compress-force=zstd:3,discard=async,space_cache=v2"
+MOUNT_OPTS="defaults,ssd,noatime,autodefrag,compress-force=zstd:3,discard=async,space_cache=v2,subvol="
 MOUNT_PATH="/mnt"
 
 # Source config and handle variable expansion
@@ -59,8 +63,8 @@ trap cleanup EXIT
 
 # Get and mount BTRFS device
 if [[ -n $lin ]]; then
-    device=$(readlink -f "${lin/#\//"/dev/"}")
-    [[ -b $device ]] || device="/dev/disk/by-label/$lin"
+    device="/dev/disk/by-label/$lin"
+    echo "$device $lin $MOUNT_PATH $SUFF $SUBVOLUMES"
 else
     mapfile -t devices < <(
         find /dev -type b -exec bash -c '
@@ -78,32 +82,33 @@ else
                    "${devices[@]/%*/}") || error "No device selected"
 fi
 
-# Validate and mount
+# Validate
 [[ -b $device && $(blkid -p -o value -s TYPE "$device") == "btrfs" ]] ||
     error "Not a valid BTRFS device: $device"
+if [[ -z "$SUBVOLUMES" ]]; then
+    mount -o "$MOUNT_OPTS/" "$device" "$MOUNT_PATH" || error "Mount failed"
 
-mount -o "$MOUNT_OPTS" "$device" "$MOUNT_PATH" || error "Mount failed"
+    # Get subvolumes
+    mapfile -t subvols < <(btrfs subvolume list "$MOUNT_PATH" | awk '{print $NF}' | sort)
+    [[ ${#subvols[@]} -gt 0 ]] || error "No subvolumes found"
 
-# Get subvolumes
-mapfile -t subvols < <(btrfs subvolume list "$MOUNT_PATH" | awk '{print $NF}' | sort)
-[[ ${#subvols[@]} -gt 0 ]] || error "No subvolumes found"
-
-# Select and mount root
-root_subvol=$(printf '%s\n' "${subvols[@]}" | grep -m1 '^@$') ||
-    root_subvol=$(dialog --stdout --title "Root Selection" \
+    # Select and mount root
+    root_subvol=$(printf '%s\n' "${subvols[@]}" | grep -m1 '^@$') \
+        || root_subvol=$(dialog --stdout --title "Root Selection" \
                         --menu "\nSelect root subvolume:\n " 25 80 15 \
                         "${subvols[@]}") || error "No root selected"
-
-status "Mounting root subvolume: $root_subvol"
-umount -R "$MOUNT_PATH"
-mount -o "${MOUNT_OPTS},subvol=${root_subvol}" "$device" "$MOUNT_PATH" ||
-    error "Failed to mount root subvolume"
-
-# Mount remaining subvolumes
+    umount -R "${MOUNT_PATH}"
+else
+    root_subvol="@"
+    status "Mounting root subvolume: $root_subvol from device: $device at $MOUNT_PATH"
+    mount -o "$MOUNT_OPTS$root_subvol" "$device" "$MOUNT_PATH" \
+        || error "Failed to mount root subvolume"
+fi
+#Mount remaining subvolumes
 if [[ -n $SUBVOLUMES ]]; then
     while IFS='=' read -r subvol mp; do
         [[ -z $subvol || $subvol == \#* || $subvol == "$root_subvol" ]] && continue
-         mount_subvol "$subvol" "$mp"
+        mount_subvol "$subvol" "$mp"
     done < <(echo "$SUBVOLUMES" | tr ' ' '\n')
 elif [[ -f "$MOUNT_PATH/etc/fstab" ]]; then
     while read -r _ mp fs opts _; do
@@ -112,5 +117,4 @@ elif [[ -f "$MOUNT_PATH/etc/fstab" ]]; then
         [[ $subvol != "$root_subvol" ]] && mount_subvol "$subvol" "$mp"
     done < "$MOUNT_PATH/etc/fstab"
 fi
-
 status "Mounting complete"

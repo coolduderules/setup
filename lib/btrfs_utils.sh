@@ -31,7 +31,11 @@ check_requirements() {
         return 1
     fi
 }
-
+if [[ $MOUNT_ONLY == 1 ]]; then
+    check_requirements
+    exec "$0/../scripts/mount_btrfs.sh" "${CONFIG_FILE}"
+    exit 1
+fi
 # Enhanced subvolume deletion
 delete_subvolume() {
     local mount_path="${MOUNT_PATH:-1}"
@@ -110,12 +114,7 @@ recreate_subvolumes() {
 
 # Mount subvolumes in correct locations
 mount_subvolumes() {
-    # Ensure clean mount point
-    if [[ $MOUNT_ONLY == 1 ]]; then
-        exec "$0/../scripts/mount_btrfs.sh" "${CONFIG_FILE}"
-    fi
     cleanup_mounts "$MOUNT_PATH" || return 1
-    # Mount root (@) subvolume first
     log "Mounting root subvolume (@)" "DEBUG"
     mount --mkdir -o "defaults,ssd,noatime,autodefrag,compress-force=zstd:3,discard=async,space_cache=v2,commit=120,subvol=@" \
         "/dev/disk/by-label/${lin}" "$MOUNT_PATH" || return 1
@@ -126,7 +125,15 @@ mount_subvolumes() {
             mountpoint=${mountpoint// /}
             mkdir -p "$MOUNT_PATH$mountpoint"
         done || :
-        mkdir -p "$MOUNT_PATH/var/lib/{portables,machines}" || :
+    rm -rf "$MOUNT_PATH/var/lib/portables" || :
+    mkdir -p "$MOUNT_PATH/r/lib/machines" || :
+    umount -R "$MOUNT_PATH/var/lib/portables" || :
+    umount -R "$MOUNT_PATH/var/lib/machines" || : 
+    btrfs sub delete -C "$MOUNT_PATH/var/lib/portables" || :
+    btrfs sub delete -C "$MOUNT_PATH/var/lib/machines" || :
+    rm -rf "$MOUNT_PATH/var/lib/portables" || :
+    rm -rf "$MOUNT_PATH/var/lib/machines" || : 
+    mkdir -p "$MOUNT_PATH/var/lib/machines" ||  
 
     # Sort and mount other subvolumes by mountpoint depth
     echo "$SUBVOLUMES" | grep -v '^#' | grep -v '@=/' | sort -t'/' -k2 \
@@ -171,22 +178,16 @@ mount_and_setup_subvolumes() {
     lsof "$MOUNT_PATH" | grep -v 'COMMAND' | awk '{print $2}' | xargs kill -9 || :
     umount -R "$MOUNT_PATH" || umount -l -R "$MOUNT_PATH" || :
 
-    if [[ $RECREATE_ESP == 1 ]]; then
-        echo "creating EFI filesystem"
-        mkfs.fat -F 32 -n "${esp}" "/dev/disk/by-label/${esp}"
-    fi
-    if [[ $RECREATE_SUBVOLS == 1 ]] && [[ $MOUNT_ONLY != 1 ]]; then
+    if [[ $RECREATE_SUBVOLS == 1 ]]; then
         recreate_subvolumes
-        cleanup_mounts
-        mount_btrfs_root
-        mount_subvolumes
-    else
-        cleanup_mounts
-        mount_btrfs_root
-        mount_subvolumes
     fi
-    # Mount ESP to /boot
+    
+    cleanup_mounts
+    mount_btrfs_root
+    mount_subvolumes
+    echo "creating EFI filesystem"
+    mkfs.fat -F 32 -n "${esp}" "/dev/disk/by-label/${esp}"
     mount --mkdir -o "defaults,noatime" "/dev/disk/by-label/${esp}" "$MOUNT_PATH/boot" || return 1
 }
 
-export -f recreate_subvolumes mount_subvolumes generate_fstab
+export -f recreate_subvolumes mount_and_setup_subvolumes mount_subvolumes generate_fstab
