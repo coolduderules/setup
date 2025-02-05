@@ -2,79 +2,115 @@
 set -eo pipefail
 
 error() { printf "Error: %s\n" "$*" >&2; exit 1; }
-
+status() { printf ">>> %s\n" "$*" >&2; }
 cleanup() { [[ -d $MOUNT_PATH ]] && mountpoint -q "$MOUNT_PATH" && umount -R "$MOUNT_PATH" 2>/dev/null; }
-mount_subvolumes() {
-	echo "Cleaning up mount path: $MOUNT_PATH"
-	[[ -d $MOUNT_PATH ]] && mountpoint -q "$MOUNT_PATH" &&
-	umount -R "$MOUNT_PATH" 2>/dev/null || true
-	rm -rf "${MOUNT_PATH:-/mnt}"/* "${MOUNT_PATH:-/mnt}"/.* || :
-	ecbo "Mounting root subvolume (@) at $MOUNT_PATH"
-    mount --mkdir -o "defaults,ssd,noatime,autodefrag,compress-force=zstd:3,discard=async,space_cache=v2,commit=120,subvol=@" \
-        "/dev/disk/by-label/${lin}" "$MOUNT_PATH" || return 1
-
-    # Sort and mount other subvolumes by mountpoint depth
-    echo "$SUBVOLUMES" | grep -v '^#' | grep -v '@=/' | sort -t'/' -k2 \
-        | while IFS='=' read -r subvol mountpoint; do
-            [[ -z $subvol || $subvol =~ ^[[:space:]]*# ]] && continue
-			subvol=${subvol// /}
-            mountpoint=${mountpoint// /}
-			echo "Mounting subvolume $subvol to $MOUNT_PATH$mountpoint"
-            mount --mkdir -o "defaults,ssd,noatime,autodefrag,compress-force=zstd:3,discard=async,space_cache=v2,commit=120,subvol=$subvol" \
-                "/dev/disk/by-label/${lin}" "$MOUNT_PATH$mountpoint" || {
-                return $?
-            }
-        done
-	mount -o defaults,noatime "/dev/disk/by-label/${esp}" "${MOUNT_PATH}/boot" || return 1
+mount_subvol() {
+    local subvol="$1" mp="${2##/}"
+    status "Mounting ${subvol} at ${MOUNT_PATH}/${mp}"
+    mount -o "${MOUNT_OPTS},subvol=${subvol}" --mkdir "$device" "${MOUNT_PATH}/${mp}" ||
+        error "Failed to mount $subvol"
 }
 
-if [[ $EUID  != 0 ]]; then
-	echo "Script must be run as root, attempting to elevate"
-	exec sudo -E -- "$0" "$@"
-	exit 1
-fi
+  [[ $(id -u) == 0 ]] || exec sudo -E -- "$0" "$@"
 command -v dialog >/dev/null || pacman -Sy --noconfirm dialog
 command -v btrfs >/dev/null || pacman -Sy --noconfirm btrfs-progs
+MOUNT_OPTS="defaults,ssd,noatime,autodefrag,compress-force=zstd:3,discard=async,space_cache=v2"
+MOUNT_PATH="/mnt"
 
 # Source config and handle variable expansion
 if [[ -n $1 && -f $1 && -z $2 ]]; then
-	# shellcheck disable=SC1090
-	source "$1"
-	[[ -n $SUFF ]] && lin="LIN${SUFF}" && esp="ESP${SUFF}"
-	shift
+    set -a
+    # shellcheck disable=SC1090
+    source "$1"
+    set +a
+    [[ -n $SUFF ]] && lin="LIN${SUFF}"
+    shift
 fi
 
 while [[ $# -gt 0 ]]; do
-	case "$1" in
-		-m|--mount-path) MOUNT_PATH=${2:-/mnt}; shift 2 ;;
-		-h|--help) cat <<EOF
-Mount BTRFS subvolumes from config, device or label.
-
+    case "$1" in
+        -m|--mount-path)
+            MOUNT_PATH=${2:-/mnt}
+            shift 2
+            ;;
+        -h|--help)
+            cat <<-EOF
 Usage: $0 [config] [-m path] [device]
-
-Config example: ### ESP and root partitions are named ESP(SUFF) and LIN(SUFF)
-Just because I automate a lot of installs and devices it removes any chance of mix-ups
-feel free to change it to your liking ###
-
-MOUNT_PATH=''
-SUFF=''
-SUBVOLUMES='
-@=/
-@home=/home
-@log=/var/log
-'
+Mount BTRFS subvolumes from config, device or label.
+Config: MOUNT_PATH=, DEVICE=, SUBVOLUMES="subvol=path"
 EOF
-			exit 0 ;;
-		-*) error "Unknown option: $1" ;;
-
-		*) # shellcheck disable=SC1090
-		   [[ -n "${SUFF}" ]] || source "$1" && lin="LIN${SUFF}" && esp="ESP${SUFF}"; shift ;;
-	esac
+            exit 0
+            ;;
+        -*)
+            error "Unknown option: $1"
+            ;;
+        *)
+            if [[ -n "${SUFF}" ]]; then
+                lin="LIN${SUFF}"
+            fi
+            shift
+            ;;
+    esac
 done
+
+mkdir -p "$MOUNT_PATH" || error "Cannot create $MOUNT_PATH"
 [[ -w $MOUNT_PATH ]] || error "Mount point not writable: $MOUNT_PATH"
-[[ -n $lin ]] || error "No device specified"
-if ! mount_subvolumes; then
-	error "Mounting failed with error: $?"
+trap cleanup EXIT
+
+# Get and mount BTRFS device
+if [[ -n $lin ]]; then
+    device=$(readlink -f "${lin/#\//"/dev/"}")
+    [[ -b $device ]] || device="/dev/disk/by-label/$lin"
 else
-	error "Mounting failed"
+    mapfile -t devices < <(
+        find /dev -type b -exec bash -c '
+            for d; do
+                [[ $(blkid -p -o value -s TYPE "$d") == "btrfs" ]] || continue
+                echo "$d"
+                lsblk -no SIZE,LABEL,FSUSE% "$d" 2>/dev/null
+            done' _ {} +
+    )
+    [[ ${#devices[@]} -gt 0 ]] || error "No BTRFS devices found"
+
+    device=$(dialog --stdout --no-collapse --colors \
+                   --title "Device Selection" \
+                   --menu "\nSelect partition:\n " 25 80 15 \
+                   "${devices[@]/%*/}") || error "No device selected"
 fi
+
+# Validate and mount
+[[ -b $device && $(blkid -p -o value -s TYPE "$device") == "btrfs" ]] ||
+    error "Not a valid BTRFS device: $device"
+
+mount -o "$MOUNT_OPTS" "$device" "$MOUNT_PATH" || error "Mount failed"
+
+# Get subvolumes
+mapfile -t subvols < <(btrfs subvolume list "$MOUNT_PATH" | awk '{print $NF}' | sort)
+[[ ${#subvols[@]} -gt 0 ]] || error "No subvolumes found"
+
+# Select and mount root
+root_subvol=$(printf '%s\n' "${subvols[@]}" | grep -m1 '^@$') ||
+    root_subvol=$(dialog --stdout --title "Root Selection" \
+                        --menu "\nSelect root subvolume:\n " 25 80 15 \
+                        "${subvols[@]}") || error "No root selected"
+
+status "Mounting root subvolume: $root_subvol"
+umount -R "$MOUNT_PATH"
+mount -o "${MOUNT_OPTS},subvol=${root_subvol}" "$device" "$MOUNT_PATH" ||
+    error "Failed to mount root subvolume"
+
+# Mount remaining subvolumes
+if [[ -n $SUBVOLUMES ]]; then
+    while IFS='=' read -r subvol mp; do
+        [[ -z $subvol || $subvol == \#* || $subvol == "$root_subvol" ]] && continue
+         mount_subvol "$subvol" "$mp"
+    done < <(echo "$SUBVOLUMES" | tr ' ' '\n')
+elif [[ -f "$MOUNT_PATH/etc/fstab" ]]; then
+    while read -r _ mp fs opts _; do
+        [[ $fs != "btrfs" || $opts != *"subvol="* ]] && continue
+        subvol=${opts#*subvol=}; subvol=${subvol%%,*}
+        [[ $subvol != "$root_subvol" ]] && mount_subvol "$subvol" "$mp"
+    done < "$MOUNT_PATH/etc/fstab"
+fi
+
+status "Mounting complete"

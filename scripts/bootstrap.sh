@@ -10,9 +10,8 @@ source "$CONFIG_FILE"
 # Run post-install setup
 mkdir -p "${MOUNT_PATH}/home/setup"
 rsync -axHAWXS --info=progress2 "$SCRIPT_DIR"/ "${MOUNT_PATH}"/home/setup/
-rsync -axHAWXS --info=progress2 "${CONFIG_FILE}" "${MOUNT_PATH}"/home/setup/scripts/
 
 archinstall \
-    --config "$SCRIPT_DIR/.private/tmp_user_configuration.json" \
-    --creds "$SCRIPT_DIR/.private/tmp_user_credentials.json" \
-    --advanced --silent --script tmp_guided_bootless && rm "${SCRIPT_DIR}"/.private/tmp_* || exit 1
+    --config "$SCRIPT_DIR/private/tmp_user_configuration.json" \
+    --creds "$SCRIPT_DIR/private/tmp_user_credentials.json" \
+    --advanced --silent --script tmp_guided_bootless && rm "${SCRIPT_DIR}"/private/tmp_* || exit 1

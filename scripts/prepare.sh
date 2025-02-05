@@ -17,5 +17,5 @@ init_script "$@"
 generate_install_files "$SCRIPT_DIR" || exit 1
 
 # Copy installation files
-rsync -axHAWXS --info=progress2 "$SCRIPT_DIR/.private/tmp_guided_bootless.py" \
+rsync -axHAWXS --info=progress2 "$SCRIPT_DIR/private/tmp_guided_bootless.py" \
     /usr/lib/python3.13/site-packages/archinstall/scripts/ || exit 1

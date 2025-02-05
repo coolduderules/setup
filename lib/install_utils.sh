@@ -22,12 +22,12 @@ process_template() {
 
 # Generate installation files from templates
 generate_install_files() {
-    mkdir -p "$SCRIPT_DIR/.private"
+    mkdir -p "$SCRIPT_DIR/private"
     process_template "$SCRIPT_DIR/lib/user_configuration.json.template" \
-        "$SCRIPT_DIR/.private/tmp_user_configuration.json" || return 1
+        "$SCRIPT_DIR/private/tmp_user_configuration.json" || return 1
     process_template "$SCRIPT_DIR/lib/user_credentials.json.template" \
-        "$SCRIPT_DIR/.private/tmp_user_credentials.json" || return 1
+        "$SCRIPT_DIR/private/tmp_user_credentials.json" || return 1
     sed -e "s|MOUNT_PATH|${MOUNT_PATH}|g" \
-        "$SCRIPT_DIR/lib/guided_bootless.py.template" > "$SCRIPT_DIR/.private/tmp_guided_bootless.py" || return 1
+        "$SCRIPT_DIR/lib/guided_bootless.py.template" > "$SCRIPT_DIR/private/tmp_guided_bootless.py" || return 1
 }
 export -f process_template generate_install_files

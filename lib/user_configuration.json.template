@@ -5,7 +5,8 @@
     "bootloader": "Grub",
     "config_version": "3.0.1",
     "custom-commands": [
-        ""
+        "sh /home/setup/private/scripts/post.sh",
+        "sh /home/setup/private/scripts/chroot.sh"
     ],
     "disk_config": {
         "config_type": "pre_mounted_config",
