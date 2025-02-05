@@ -1,0 +1,36 @@
+# Maintainer: T.J. Townsend <blakkheim@archlinux.org>
+
+pkgbase=nerd-fonts
+pkgname=ttf-jetbrains-mono-nerd
+pkgdesc="Iconic font aggregator, collection, and patcher"
+pkgver=2.3.3
+pkgrel=1
+arch=('any')
+url='https://github.com/ryanoasis/nerd-fonts'
+_urlbase="${url}/releases/download/v${pkgver}"
+license=('MIT' 'OFL-1.1')
+options=('!debug' '!strip')
+provides=('ttf-font-nerd')
+groups=('nerd-fonts')
+source=("jetbrainsmono-${pkgver}.zip::${_urlbase}/JetBrainsMono.zip")
+sha256sums=('187c316bb77ed1c824099fe8621a17d14f7de8a6ce5b14a1a04de0ae674b4aa6')
+noextract=("${source[@]%%::*}")
+
+prepare() {
+  # archives don't include a font-specific directory, so we have to make them
+  for _font in jetbrainsmono; do
+  rm -rf ${_font}
+  mkdir ${_font}
+  unzip ${_font}-${pkgver}.zip -d ${_font}
+  done
+}
+
+package_ttf-jetbrains-mono-nerd() {
+  pkgdesc="Patched font JetBrains Mono from nerd fonts library"
+  license=('OFL-1.1-no-RFN')
+  conflicts=(nerd-fonts-jetbrains-mono)
+  replaces=(nerd-fonts-jetbrains-mono)
+
+  install -Dm644 jetbrainsmono/*.ttf -t "${pkgdir}/usr/share/fonts/TTF"
+  install -Dm644 jetbrainsmono/OFL.txt -t "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

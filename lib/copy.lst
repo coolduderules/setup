@@ -1,0 +1,18 @@
+~/.vscode/
+~/.vscode-oss/
+~/.vscode-server/
+~/.vscode-cli/
+~/.ssh/
+/etc/ssh/
+~/.gitconfig
+~/.git-credentials
+~/.config/Code - OSS/
+~/code
+/var/cache/pacman/pkg/
+~/.zshrc
+/etc/environment
+/etc/systemd/system/code-tunnel.service
+~/.config/op/
+~/.config/1Password/
+/etc/sudoers.d/
+/etc/sudoers

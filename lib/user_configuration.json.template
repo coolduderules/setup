@@ -1,0 +1,51 @@
+{
+    "additional-repositories": [],
+    "archinstall-language": "English",
+    "audio_config": null,
+    "bootloader": "Grub",
+    "config_version": "3.0.1",
+    "custom-commands": [
+        ""
+    ],
+    "disk_config": {
+        "config_type": "pre_mounted_config",
+        "mountpoint": "MOUNT_PATH"
+    },
+    "disk_encryption": null,
+    "hostname": "HOST_NAME",
+    "kernels": [
+        "linux"
+    ],
+    "locale_config": {
+        "kb_layout": "us",
+        "sys_enc": "UTF-8",
+        "sys_lang": "en_US"
+    },
+    "mirror_config": "United States",
+    "network_config": {
+        "type": "nm"
+    },
+    "ntp": true,
+    "packages": "PACKAGE_LIST",
+    "parallel downloads": 4,
+    "profile_config": {
+        "gfx_driver": "All open-source",
+        "greeter": null,
+        "profile": {
+            "custom_settings": {
+                "Cockpit": {},
+                "sshd": {}
+            },
+            "details": [
+                "Cockpit",
+                "sshd"
+            ],
+            "main": "Server"
+        }
+    },
+    "save_config": null,
+    "swap": true,
+    "timezone": "TIME_ZONE",
+    "uki": false,
+    "version": "3.0.1"
+}

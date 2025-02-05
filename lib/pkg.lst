@@ -1,0 +1,11 @@
+grub
+grub-btrfs
+base-devel
+sudo
+snap-pac
+cockpit-files
+cockpit-storaged
+nano
+lsof
+git
+rsync
