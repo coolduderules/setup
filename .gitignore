@@ -1,6 +1,6 @@
 # Private directory - ignore contents but not directory itself
-.private/*
-!.private/.gitkeep
+private/*
+!private/.*
 
 # Arch Linux specific
 var/

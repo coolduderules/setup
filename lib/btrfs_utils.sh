@@ -125,15 +125,16 @@ mount_subvolumes() {
             mountpoint=${mountpoint// /}
             mkdir -p "$MOUNT_PATH$mountpoint"
         done || :
-    rm -rf "$MOUNT_PATH/var/lib/portables" || :
-    mkdir -p "$MOUNT_PATH/r/lib/machines" || :
-    umount -R "$MOUNT_PATH/var/lib/portables" || :
-    umount -R "$MOUNT_PATH/var/lib/machines" || : 
-    btrfs sub delete -C "$MOUNT_PATH/var/lib/portables" || :
-    btrfs sub delete -C "$MOUNT_PATH/var/lib/machines" || :
-    rm -rf "$MOUNT_PATH/var/lib/portables" || :
-    rm -rf "$MOUNT_PATH/var/lib/machines" || : 
-    mkdir -p "$MOUNT_PATH/var/lib/machines" ||  
+    rm -rf "$MOUNT_PATH/var/lib/portables" > /dev/null 2>&1 || :
+    rm -rf "$MOUNT_PATH/var/lib/machines" > /dev/null 2>&1 || :
+    umount -R "$MOUNT_PATH/var/lib/portables" > /dev/null 2>&1 || :
+    umount -R "$MOUNT_PATH/var/lib/machines" > /dev/null 2>&1 || : 
+    btrfs sub delete -C "$MOUNT_PATH/var/lib/portables" > /dev/null 2>&1 || :
+    btrfs sub delete -C "$MOUNT_PATH/var/lib/machines" > /dev/null 2>&1 || :
+    rm -rf "$MOUNT_PATH/var/lib/portables" > /dev/null 2>&1 || :
+    rm -rf "$MOUNT_PATH/var/lib/machines" > /dev/null 2>&1 || : 
+    mkdir -p "$MOUNT_PATH/var/lib/machines" > /dev/null 2>&1 || :
+    mkdir -p "$MOUNT_PATH/var/lib/portables" > /dev/null 2>&1 || :
 
     # Sort and mount other subvolumes by mountpoint depth
     echo "$SUBVOLUMES" | grep -v '^#' | grep -v '@=/' | sort -t'/' -k2 \

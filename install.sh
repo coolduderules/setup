@@ -28,12 +28,6 @@ main() {
     log "Phase 2: Setting up filesystems"
     mount_and_setup_subvolumes || return $?
 
-    # Exit early if mount-only mode
-    if [[ ${MOUNT_ONLY:-1} -eq 1 ]]; then
-        log "Mount-only mode, stopping after filesystem setup"
-        return 0
-    fi
-
     # Phase 3: System Installation
     log "Phase 3: Bootstrapping system"
     "$SCRIPT_DIR/scripts/bootstrap.sh" || return $?
