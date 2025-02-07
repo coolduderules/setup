@@ -33,8 +33,8 @@ main() {
     "$SCRIPT_DIR/scripts/bootstrap.sh" || return $?
 
     # Phase 4: Post-Install Setup
-    # log "Phase 4: Running post-installation tasks"
-    # arch-chroot "${MOUNT_PATH}" "/home/$USER_NAME/setup/private/scripts/post.sh" || return $?
+    log "Phase 4: Running post-installation tasks"
+    arch-chroot "${MOUNT_PATH}" "/home/setup/private/scripts/post.sh" || return $?
 
     return 0
 }

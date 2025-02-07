@@ -27,7 +27,7 @@ if [[ -n $1 && -f $1 && -z $2 ]]; then
     # shellcheck disable=SC1090
     source "$1"
     set +a
-    [[ -n $SUFF ]] && lin="LIN${SUFF}"
+    [[ -n $SUFF ]] && lin="LIN${SUFF}" && esp="ESP${SUFF}"
     shift
 fi
 
@@ -51,6 +51,7 @@ EOF
         *)
             if [[ -n "${SUFF}" ]]; then
                 lin="LIN${SUFF}"
+		esp="ESP${SUFF}"
             fi
             shift
             ;;
@@ -117,4 +118,9 @@ elif [[ -f "$MOUNT_PATH/etc/fstab" ]]; then
         [[ $subvol != "$root_subvol" ]] && mount_subvol "$subvol" "$mp"
     done < "$MOUNT_PATH/etc/fstab"
 fi
-status "Mounting complete"
+status "Subvolumes successfully mounted"
+if [[ -b "/dev/disk/by-label/$esp" ]]; then
+    mount -o defaults,noatime "/dev/disk/by-label/$esp" "$MOUNT_PATH"/boot && status "Successfully mounted /dev/disk/by-label/$esp at $MOUNT_PATH/boot" || status "Could not mount /dev/disk/by-label/$esp at $MOUNT_PATH/boot"
+else
+    status "Could not find ESP at /dev/disk/by-label/$esp, mount ESP partition manually."
+fi

@@ -15,7 +15,7 @@ check_root() {
 
 # Check required dependencies
 check_dependencies() {
-    local -r DEPS=(find grep sed awk mount umount sort lsof btrfs)
+    local -r DEPS=(find grep sed awk mount umount sort lsof btrfs archinstall)
     local missing=()
 
     for cmd in "${DEPS[@]}"; do
@@ -23,8 +23,10 @@ check_dependencies() {
     done
 
     if ((${#missing[@]} > 0)); then
-        echo "Missing required commands: ${missing[*]}" >&2
-        return 1
+        echo "Missing required commands: ${missing[*]}. Attempting to install..." >&2
+	if (! pacman -S --noconfirm ${missing[*]}); then
+	return 1
+	fi
     fi
     return 0
 }
