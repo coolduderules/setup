@@ -1,0 +1,7 @@
+post_install() {
+modprobe -r brcmfmac_wcc || true
+modprobe -r brcmfmac || true
+modprobe brcmfmac || true
+modprobe -r hci_bcm4377 || true
+modprobe hci_bcm4377 || true
+}

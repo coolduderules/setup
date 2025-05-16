@@ -1,0 +1,19 @@
+pkgname=apple-firmware
+pkgver=1
+pkgrel=1
+pkgdesc="Wi-Fi and Bluetooth Firmware for T2 Macs"
+arch=("any")
+url=""
+license=('unknown')
+replaces=('apple-bcm-wifi-firmware')
+source=("firmware.tar")
+noextract=("firmware.tar")
+sha256sums=('SKIP')
+
+package() {
+	mkdir -p $pkgdir/usr/lib/firmware/brcm
+	cd $pkgdir/usr/lib/firmware/brcm
+	tar xf $srcdir/firmware.tar
+}
+
+install=apple-firmware.install

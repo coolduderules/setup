@@ -1,0 +1,97 @@
+# Private directory - ignore contents but not directory itself
+private/*
+!private/.*
+
+# Arch Linux specific
+var/
+
+# Installation artifacts
+/mnt/
+/archinstall/
+*.img
+*.iso
+/efi/
+/boot/
+/snapshots/
+/.snapshots/
+
+# Build and temp files
+*.log
+*.log.*
+/build/
+/target/
+/out/
+/branch/
+.directory
+*~
+*.swp
+*.swo
+*.kate-swp
+
+# Local configuration
+config.local.conf
+*.local
+*.private
+*_private*
+!.private/
+.env
+.env.*
+
+# System and mount points
+/proc/
+/sys/
+/dev/
+/run/
+/tmp/
+/media/
+/mnt*/
+
+# IDE and editor
+.idea/
+.vscode/
+*.sublime-*
+*.iml
+
+# Generated files
+*.generated
+*.tmp
+setup.local.sh
+btrfs.local.sh
+/local/
+
+# Testing
+/test/
+/tests/
+/testing/
+debug/
+
+# Backup and temp files
+tmp.*
+*.save
+*.save.*
+*~
+*.bak
+*.orig
+*.tmp.*
+*.[0-9]
+*.[0-9].*
+*.swp
+*.swo
+*#
+.#*
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+*~
+\#*\#
+
+# macOS system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
